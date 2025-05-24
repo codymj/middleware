@@ -14,7 +14,7 @@ type MetricsParams struct {
 	MemoryUsage         prometheus.Gauge
 }
 
-func MetricsMiddleware(params MetricsParams) Middleware {
+func Metrics(params MetricsParams) Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
