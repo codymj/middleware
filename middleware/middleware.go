@@ -1,17 +1,31 @@
 package middleware
 
-import "net/http"
+import (
+	"net/http"
+	"slices"
+)
 
 // For setting values in context.Context.
 type ContextKey string
 
 const (
+	// Set client IP.
 	ClientContextKey ContextKey = "client"
 )
 
-// Middleware type for chaining HTTP handlers.
+// For chaining middleware.
 type Middleware func(http.HandlerFunc) http.HandlerFunc
 
+type Chain []Middleware
+
+func (c Chain) Then(h http.HandlerFunc) http.HandlerFunc {
+	for _, mw := range slices.Backward(c) {
+		h = mw(h)
+	}
+	return h
+}
+
+// For wrapping responses with additional data.
 type statusRecorder struct {
 	http.ResponseWriter
 	status int
