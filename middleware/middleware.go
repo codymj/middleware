@@ -5,6 +5,10 @@ import "net/http"
 // For setting values in context.Context.
 type ContextKey string
 
+const (
+	ClientContextKey ContextKey = "client"
+)
+
 // Middleware type for chaining HTTP handlers.
 type Middleware func(http.HandlerFunc) http.HandlerFunc
 

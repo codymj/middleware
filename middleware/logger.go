@@ -1,15 +1,10 @@
 package middleware
 
 import (
-	"context"
-	"net"
 	"net/http"
-	"strings"
 
 	"github.com/rs/zerolog"
 )
-
-const ClientContextKey ContextKey = "client"
 
 // Parameters for the tracer middleware.
 type LoggerParams struct {
@@ -20,18 +15,8 @@ type LoggerParams struct {
 func Logger(params LoggerParams) Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// For logging client IP and setting it in context.
-			client := r.Header.Get("X-Forwarded-For")
-			if client == "" {
-				client = r.Header.Get("X-Real-IP")
-			}
-			if client == "" {
-				client = r.RemoteAddr
-			}
-			if strings.Contains(client, ":") {
-				client, _, _ = net.SplitHostPort(client)
-			}
-			ctx := context.WithValue(r.Context(), ClientContextKey, client)
+			// Get client's IP.
+			client := r.Context().Value(ClientContextKey).(string)
 
 			// Create a logger to pass into the request context.
 			logger := zerolog.Ctx(r.Context()).With().
@@ -53,7 +38,7 @@ func Logger(params LoggerParams) Middleware {
 			}
 
 			// Do work.
-			ctx = logger.WithContext(ctx)
+			ctx := logger.WithContext(r.Context())
 			next.ServeHTTP(sr, r.WithContext(ctx))
 
 			// Note end of request.

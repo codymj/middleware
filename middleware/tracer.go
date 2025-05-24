@@ -1,7 +1,10 @@
 package middleware
 
 import (
+	"context"
+	"net"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -17,6 +20,19 @@ func Tracer(next http.HandlerFunc) http.HandlerFunc {
 			r.Header.Set("X-Trace-Id", traceId)
 		}
 
-		next.ServeHTTP(w, r)
+		// Store client IP in context.
+		client := r.Header.Get("X-Forwarded-For")
+		if client == "" {
+			client = r.Header.Get("X-Real-IP")
+		}
+		if client == "" {
+			client = r.RemoteAddr
+		}
+		if strings.Contains(client, ":") {
+			client, _, _ = net.SplitHostPort(client)
+		}
+		ctx := context.WithValue(r.Context(), ClientContextKey, client)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
