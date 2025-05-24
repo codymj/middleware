@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"runtime"
+	"runtime/debug"
 
 	"github.com/rs/zerolog"
 )
@@ -19,10 +20,12 @@ func Recover(next http.HandlerFunc) http.HandlerFunc {
 			}
 
 			if rec := recover(); rec != nil {
+				stacktrace := debug.Stack()
 				zerolog.Ctx(r.Context()).Error().
 					Interface("recover", rec).
 					Str("file", file).
 					Int("line", line).
+					Bytes("stacktrace", stacktrace).
 					Msg("panic")
 			}
 		}()
